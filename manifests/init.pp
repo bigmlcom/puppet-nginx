@@ -28,7 +28,23 @@ class nginx {
 	$real_nginx_worker_processes = $nginx_worker_processes ? { '' => '1', default => $nginx_worker_processes }
 	$real_nginx_worker_connections = $nginx_worker_connections ? { '' => '1024', default => $nginx_worker_connections }
 
-	package { nginx: ensure => installed }
+	file { "/usr/local/src/nginx.tar.gz":
+      ensure=> present,
+      source=> 'puppet:///files/bigml-nginx.tar.gz'
+   	}
+
+	exec { "tar xzf /usr/local/src/nginx.tar.gz":
+	  cwd => "/var/tmp",
+	  creates => "/usr/local/src/bigml-nginx",
+	  path => ["/usr/bin", "/usr/sbin"],
+	  requires => File['/usr/local/src/nginx.tar.gz']
+	}
+	
+	exec { "sudo sh /usr/local/src/bigml_configure":
+	  cwd => "/usr/local/src",
+	  path => ["/usr/bin", "/usr/sbin"],
+	  requires => Directory['/usr/local/src/bigml-nginx']
+	}
 
 	service { nginx:
         	ensure => running,
